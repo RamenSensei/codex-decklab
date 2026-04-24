@@ -17,8 +17,6 @@ polished, full-image PowerPoint decks. It uses Codex built-in image generation
 and local deterministic scripts for extraction, QA contact sheets, and PPTX
 assembly.
 
-**Source-grounded like NotebookLM. Presentation-native like a keynote deck.
-Automated inside Codex.**
 
 ## Design Principles
 
