@@ -21,7 +21,7 @@ assembly.
 ```
 Use $image-ppt-from-docs. Read the files in sources/ and create a highly detailed, 15-slide Chinese image-based presentation for a professional audience. Let the model choose a unified academic conference style based on the materials. Save the output to output/.
 ```
-[!contact-sheet.jpg](https://i.ibb.co/Zz9fZrsM/contact-sheet.jpg)
+![contact-sheet.jpg](https://i.ibb.co/Zz9fZrsM/contact-sheet.jpg)
 
 
 ## Design Principles
