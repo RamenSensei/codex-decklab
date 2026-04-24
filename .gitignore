@@ -1,0 +1,11 @@
+.venv/
+build/
+output/
+.DS_Store
+**/.DS_Store
+._*
+**/._*
+__MACOSX/
+sources/*
+!sources/README.md
+

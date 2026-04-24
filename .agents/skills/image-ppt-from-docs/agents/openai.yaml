@@ -1,0 +1,8 @@
+interface:
+  display_name: "Codex DeckLab"
+  short_description: "Source-grounded image deck generation."
+  brand_color: "#25573B"
+  default_prompt: "Use $image-ppt-from-docs to turn sources/ into a polished source-grounded image deck in output/."
+
+policy:
+  allow_implicit_invocation: true

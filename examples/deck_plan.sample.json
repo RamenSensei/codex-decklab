@@ -1,0 +1,114 @@
+{
+  "deck_title": "From Documents to Visual Narrative",
+  "scenario": "International professional briefing / research showcase",
+  "audience": "Global professional audience, researchers, product teams, and technically literate stakeholders",
+  "language": "English",
+  "aspect_ratio": "16:9",
+  "style_system": "Minimalist modern flat keynote system: Apple keynote-like restraint, Bauhaus geometric clarity, constructivist composition, Swiss-grid discipline, generous whitespace, crisp international sans-serif typography, restrained neutral palette with one intentional accent.",
+  "detail_strategy": "Cover and closing are sparse; method and evidence slides use moderate structured labels and flat diagrams; avoid dense document-like paragraphs.",
+  "slides": [
+    {
+      "slide_no": 1,
+      "title": "From Documents to Visual Narrative",
+      "message": "Complex source materials can become clear, memorable presentation images.",
+      "visual_role": "cover",
+      "detail_level": "low",
+      "on_slide_text": [
+        "From Documents to Visual Narrative",
+        "Image-based deck workflow"
+      ],
+      "image_prompt": "Create one 16:9 presentation slide image. Scenario: international professional briefing. Audience: global professional audience. Slide role: cover. Core message: complex source materials can become clear, memorable presentation images. Detail level: low. Exact text to render, no extra words: \"From Documents to Visual Narrative\" and \"Image-based deck workflow\". Visual design: minimalist modern flat keynote cover, abstract documents transforming into clean geometric presentation frames. Composition: large title, small subtitle, strong flat visual anchor, generous whitespace. Style system: Apple keynote-like restraint, Bauhaus geometry, constructivist composition, Swiss-grid discipline, crisp international typography. Constraints: readable, polished, no watermark, no fake logos, no stock-photo cliché.",
+      "source_refs": [
+        "example only"
+      ]
+    },
+    {
+      "slide_no": 2,
+      "title": "The Communication Gap",
+      "message": "Raw materials are dense, heterogeneous, and hard to present directly.",
+      "visual_role": "context",
+      "detail_level": "medium",
+      "on_slide_text": [
+        "The Communication Gap",
+        "Dense information",
+        "Mixed formats",
+        "High editing cost"
+      ],
+      "image_prompt": "Create one 16:9 presentation slide image. Scenario: international professional briefing. Audience: global professional audience. Slide role: context. Core message: raw materials are dense, heterogeneous, and hard to present directly. Detail level: medium. Exact text to render, no extra words: \"The Communication Gap\", \"Dense information\", \"Mixed formats\", \"High editing cost\". Visual design: flat geometric diagram showing PDFs, notes, tables, and images converging into a bottleneck. Composition: title top-left, three labeled factors, clean central visual. Style system: minimalist modern flat design, Apple keynote restraint, Bauhaus geometry, Swiss grid. Constraints: readable, no clutter, no fake UI, no stock imagery.",
+      "source_refs": [
+        "example only"
+      ]
+    },
+    {
+      "slide_no": 3,
+      "title": "Workflow",
+      "message": "The reusable loop is extraction, synthesis, planning, generation, and delivery.",
+      "visual_role": "method",
+      "detail_level": "high",
+      "on_slide_text": [
+        "Workflow",
+        "Extract",
+        "Synthesize",
+        "Plan",
+        "Generate",
+        "Deliver"
+      ],
+      "image_prompt": "Create one 16:9 presentation slide image. Scenario: international professional briefing. Audience: technical and professional audience. Slide role: method. Core message: the reusable loop is extraction, synthesis, planning, generation, and delivery. Detail level: high. Exact text to render, no extra words: \"Workflow\", \"Extract\", \"Synthesize\", \"Plan\", \"Generate\", \"Deliver\". Visual design: clean five-step flat process diagram with strong alignment and concise labels. Composition: spacious horizontal or circular flow, projection-friendly labels, no tiny text. Style system: Apple keynote-like restraint, Bauhaus/constructivist geometry, Swiss-grid discipline, restrained accent color. Constraints: no watermark, no clutter, no glossy 3D.",
+      "source_refs": [
+        "example only"
+      ]
+    },
+    {
+      "slide_no": 4,
+      "title": "What Improves",
+      "message": "Visual structure improves comprehension only when accuracy remains intact.",
+      "visual_role": "evidence",
+      "detail_level": "medium",
+      "on_slide_text": [
+        "What Improves",
+        "Faster comprehension",
+        "Clearer story",
+        "Accuracy first"
+      ],
+      "image_prompt": "Create one 16:9 presentation slide image. Scenario: international professional presentation. Audience: global professional audience. Slide role: evidence. Core message: visual structure improves comprehension only when accuracy remains intact. Detail level: medium. Exact text to render, no extra words: \"What Improves\", \"Faster comprehension\", \"Clearer story\", \"Accuracy first\". Visual design: flat before/after information design, dense source blocks reorganized into a clean visual structure. Composition: one dominant comparison with three takeaway labels. Style system: minimalist modern flat, constructivist balance, Swiss typography, restrained palette. Constraints: no invented metrics, no clutter.",
+      "source_refs": [
+        "example only"
+      ]
+    },
+    {
+      "slide_no": 5,
+      "title": "Use Cases",
+      "message": "The same workflow adapts to research, training, technical reviews, and product storytelling.",
+      "visual_role": "comparison",
+      "detail_level": "medium",
+      "on_slide_text": [
+        "Use Cases",
+        "Research talk",
+        "Training",
+        "Technical review",
+        "Product story"
+      ],
+      "image_prompt": "Create one 16:9 presentation slide image. Scenario: international professional presentation. Audience: mixed global professional audience. Slide role: comparison. Core message: the same workflow adapts to research, training, technical reviews, and product storytelling. Detail level: medium. Exact text to render, no extra words: \"Use Cases\", \"Research talk\", \"Training\", \"Technical review\", \"Product story\". Visual design: flat branching map from one workflow core to four use-case nodes. Composition: centered core, four balanced branches, clear labels. Style system: Apple keynote restraint, Bauhaus geometry, Swiss-grid discipline. Constraints: readable, balanced, no stock imagery.",
+      "source_refs": [
+        "example only"
+      ]
+    },
+    {
+      "slide_no": 6,
+      "title": "Principle",
+      "message": "The goal is not decoration; it is a repeatable visual communication system.",
+      "visual_role": "closing",
+      "detail_level": "low",
+      "on_slide_text": [
+        "Principle",
+        "Accurate",
+        "Reusable",
+        "Presentation-ready"
+      ],
+      "image_prompt": "Create one 16:9 presentation slide image. Scenario: international professional closing slide. Audience: global professional audience. Slide role: closing. Core message: the goal is not decoration; it is a repeatable visual communication system. Detail level: low. Exact text to render, no extra words: \"Principle\", \"Accurate\", \"Reusable\", \"Presentation-ready\". Visual design: calm minimalist closing slide with geometric visual motif and three keywords. Composition: large title, three supporting words, generous whitespace. Style system: minimalist modern flat keynote, Apple-like restraint, Bauhaus geometry, constructivist composition. Constraints: no clutter, no extra text.",
+      "source_refs": [
+        "example only"
+      ]
+    }
+  ]
+}
