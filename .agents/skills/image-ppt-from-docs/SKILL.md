@@ -96,11 +96,14 @@ sources/
 build/
   source_manifest.json
   source_summary.md
+  source_visual_refs.json
   presentation_brief.md
   deck_plan.json
   prompts/
     slide_01.txt
     ...
+  extracted_images/
+    source_visual_crops/
 output/
   images/
     slide_01.png
@@ -141,7 +144,8 @@ python3 -m venv .venv
 .venv/bin/python .agents/skills/image-ppt-from-docs/scripts/extract_sources.py sources --out build
 ```
 
-Read `build/source_summary.md` and `build/source_manifest.json`.
+Read `build/source_summary.md`, `build/source_manifest.json`, and
+`build/source_visual_refs.json`.
 
 Extractor boundary conditions:
 
@@ -158,6 +162,46 @@ Preserve:
 - source hierarchy and section titles
 - tables and diagrams when relevant
 - visual references from source files
+
+Standalone chart and figure preservation:
+
+- If the source contains an independent data chart, plot, table rendered as an
+  image, or figure-like diagram, treat it as a separate source visual asset, not
+  just as background inspiration.
+- Use `build/source_visual_refs.json` to find extracted source visuals and page
+  context images. High-fidelity visual refs must be attached to the image
+  generation call as real image inputs/reference images, not merely mentioned as
+  local paths in the prompt.
+- Use the extracted asset path from `build/extracted_images/`, a page context
+  image from `build/page_renders/`, a page crop, or a user-provided reference
+  image together with the corresponding source page, section, caption, or
+  surrounding paragraph when planning any slide that uses that visual.
+- If an independent chart/figure is visible only inside a page render, crop it
+  into `build/extracted_images/source_visual_crops/` before slide planning and
+  append it to `build/source_visual_refs.json`:
+
+```bash
+python3 .agents/skills/image-ppt-from-docs/scripts/crop_source_visual.py \
+  build/page_renders/<source>/page_003.png \
+  --bbox x1,y1,x2,y2 \
+  --out build/extracted_images/source_visual_crops/<short_name>.png \
+  --source-path sources/<source>.pdf \
+  --page 3 \
+  --context "caption or surrounding source text"
+```
+
+- Use `--relative` when the bbox is specified as fractions from 0 to 1.
+- Preserve chart structure, data values, labels, axis relationships, legends,
+  relative proportions, and recognizable visual appearance as much as possible.
+  Do not redraw the chart from memory or simplify it in a way that changes the
+  meaning.
+- If the current Codex image-generation environment cannot attach local images
+  as reference inputs for `$imagegen`, do not pretend high-fidelity preservation
+  happened. Continue only for slides that do not require that source visual, or
+  report the limitation and the affected visual refs.
+- If the image model cannot preserve the chart faithfully enough, report that
+  limitation in `output/README.md` and the final response instead of silently
+  changing the chart or its data.
 
 Do not dump all extracted text into slides. Synthesize.
 
@@ -207,6 +251,10 @@ Each slide object must include:
 - `on_slide_text`: exact text to appear in the image; may be sparse or moderately detailed depending on need
 - `image_prompt`: complete prompt for Codex `$imagegen`
 - `source_refs`: source files or page/section notes used
+- `source_visual_refs`: extracted chart, figure, table-image, or reference image
+  paths used by the slide, plus the corresponding page/section/caption context,
+  `input_fidelity`, and whether they must be attached as image inputs; use an
+  empty array if the slide has no source visual to preserve
 
 Recommended deck logic:
 
@@ -228,6 +276,10 @@ Important operating rules:
 - Explicitly invoke `$imagegen` or ask Codex to generate images directly.
 - Do not use API scripts.
 - For multiple slides, stay on the built-in path and generate one image per slide.
+- For any slide whose `source_visual_refs` is non-empty, attach those referenced
+  files as image inputs/reference images to the `$imagegen` call with
+  high-fidelity preservation intent. Do not rely on writing a local file path in
+  text; the image model must actually receive the image.
 - Keep all final slide images under `output/images/`.
 - Save each slide prompt under `build/prompts/slide_XX.txt`.
 - Each generated image should be a complete slide, including the intended
@@ -251,6 +303,10 @@ Recommended generation strategy for multi-page decks:
    - diagram language
 4. If Codex supports using prior generated slides as references in the current environment, use the strongest one or two earlier slides as style anchors for later slides.
 5. If a slide must be denser (for example an academic method slide or a technical architecture slide), keep the same style system but increase informational density thoughtfully.
+6. If Codex supports image-reference attachment but not exact fidelity controls,
+   still attach the source visual and state the preservation goal explicitly in
+   the prompt. If the result materially changes the chart, regenerate or report
+   the limitation.
 
 ### 5. Prompting rules for slide images
 
@@ -269,6 +325,8 @@ Each slide prompt should include:
 - visual metaphor, chart type, or diagram type
 - unified style system
 - detail level for that slide
+- source visual assets to preserve, when any extracted charts or figures are
+  used, with their matching page/section/caption context
 - constraints and exclusions
 
 Use this structure:
@@ -284,6 +342,16 @@ Exact text to render, no extra words: ...
 Visual design: ...
 Composition: ...
 Style system for the entire deck: ...
+Reference images to attach, if applicable:
+- path: ...
+  purpose: high-fidelity source chart/figure reference
+  matching source context: ...
+  fidelity requirement: preserve the original chart structure, data values,
+  labels, axis relationships, legend, proportions, and recognizable appearance
+  as much as possible.
+Source visual preservation instruction, if applicable: the attached source
+visual is a reference image input, not a style-only inspiration. Integrate it
+into the generated slide while keeping the chart/figure materially unchanged.
 Constraints: modern, coherent, readable, polished spacing, no watermark, no fake logos, no clutter, no unrelated stock-photo clichés.
 ```
 
@@ -411,6 +479,8 @@ Every slide must pass:
 - no accidental logos/watermarks
 - no cropped important content
 - the level of detail matches the communication need
+- source charts and figure-like visuals are not materially changed when the
+  slide claims to preserve them
 - dense slides are intentionally dense, not messy
 - simple slides are intentionally simple, not empty
 

@@ -9,10 +9,15 @@ Task:
 - Choose page count and slide-by-slide detail level based on the source density and communication goal.
 - Keep the whole deck visually unified, modern, clear, and presentation-ready.
 - Do not over-simplify by default.
-- Output: `output/deck.pptx`, `output/images/`, `output/contact_sheet.jpg`, `build/presentation_brief.md`, and `build/deck_plan.json`.
+- Output: `output/deck.pptx`, `output/images/`, `output/contact_sheet.jpg`,
+  `build/source_visual_refs.json`, `build/presentation_brief.md`, and
+  `build/deck_plan.json`.
 - Save each final slide prompt under `build/prompts/`.
 - Treat each generated image as the final slide image. Do not create local
   text-overlay or repaint scripts after image generation.
+- If a source contains standalone charts, plots, table-images, or figure-like
+  visuals, extract or crop them as separate source visual refs and attach them
+  as high-fidelity reference image inputs for any slide that uses them.
 - If a generated image fails concrete QA, regenerate only that slide.
 
 - Make the prompts design-forward and art-directed: minimalist modern flat

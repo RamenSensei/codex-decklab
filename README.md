@@ -31,6 +31,13 @@ Use $image-ppt-from-docs. Read the files in sources/ and create a highly detaile
 - **Source-grounded deck generation**: preserve claims, numbers, dates, caveats,
   and source hierarchy from local materials instead of inventing unsupported
   content.
+- **Chart preservation**: when a source has a standalone data chart, plot, or
+  figure-like visual, extract it separately and use it with the matching source
+  page, caption, or surrounding text as a real image-generation reference input
+  so the generated slide preserves the original chart as faithfully as possible.
+  If the chart is only visible in a rendered PDF page, crop it into
+  `build/extracted_images/source_visual_crops/` and register it in
+  `build/source_visual_refs.json`.
 - **International language and audience**: do not assume Chinese or an
   executive audience. Infer language, scenario, and audience from the user
   request and source material. If unspecified, prefer English or a bilingual
@@ -81,6 +88,8 @@ After Codex finishes, check:
 - `./output/deck.pptx`: final PowerPoint deck
 - `./output/images/`: one full-slide image per page
 - `./output/contact_sheet.jpg`: visual QA overview
+- `./build/source_visual_refs.json`: source visuals to attach as reference
+  image inputs when high-fidelity chart preservation is needed
 - `./build/deck_plan.json`: editable story and prompt plan
 - `./build/prompts/`: final prompt used for each slide
 
@@ -124,9 +133,10 @@ conference projection. Use more detail on method/evidence slides and less text
 on cover and closing slides.
 
 Output only through the fixed workflow:
-build/source_summary.md, build/presentation_brief.md, build/deck_plan.json,
-build/prompts/slide_XX.txt, output/images/slide_XX.png,
-output/contact_sheet.jpg, output/deck.pptx, output/README.md.
+build/source_summary.md, build/source_visual_refs.json,
+build/presentation_brief.md, build/deck_plan.json, build/prompts/slide_XX.txt,
+output/images/slide_XX.png, output/contact_sheet.jpg, output/deck.pptx,
+output/README.md.
 ```
 
 ### Product / Strategy Brief
@@ -214,6 +224,8 @@ Add any of these constraints to your prompt:
 - `Style: Apple keynote minimalism + Bauhaus geometry + Swiss grid.`
 - `Detail density: high for method and evidence slides, sparse for cover and closing.`
 - `Preserve all numerical claims, dates, method names, and caveats from the source.`
+- `For standalone source charts, extract them as separate visual references and attach them as high-fidelity reference image inputs during generation.`
+- `Preserve source chart structure, labels, values, axes, legends, and proportions as much as possible.`
 - `Use only diagrams and abstract visuals; avoid stock photography.`
 - `Include an appendix-style final slide for limitations and source caveats.`
 
@@ -224,9 +236,13 @@ Add any of these constraints to your prompt:
 3. Start `codex` from that directory.
 4. Codex automatically:
    - runs the extraction script
-   - reads `build/source_summary.md`
+   - reads `build/source_summary.md` and `build/source_visual_refs.json`
+   - crops standalone charts from page renders when they are not available as
+     embedded images
    - creates `build/presentation_brief.md`
    - creates `build/deck_plan.json`
+   - attaches any slide-specific `source_visual_refs` as reference image inputs
+     when generating slides that use source charts or figures
    - generates each final slide image directly as `output/images/slide_XX.png`
    - creates `output/contact_sheet.jpg` for QA
    - builds `output/deck.pptx`
@@ -235,6 +251,8 @@ Add any of these constraints to your prompt:
 ## Outputs
 
 - `build/source_summary.md`: extracted source summary
+- `build/source_visual_refs.json`: extracted chart, figure, table-image, page
+  context, and user reference images for high-fidelity image input
 - `build/presentation_brief.md`: inferred scenario, audience, story strategy,
   and detail strategy
 - `build/deck_plan.json`: slide titles, messages, prompts, and unified style
@@ -247,6 +265,8 @@ Add any of these constraints to your prompt:
 
 - Input: `sources/`
 - Intermediate files: `build/`
+- Source visual refs: `build/source_visual_refs.json`
+- Source visual crops: `build/extracted_images/source_visual_crops/`
 - Slide images: `output/images/slide_XX.png`
 - PPTX: `output/deck.pptx`
 - QA overview: `output/contact_sheet.jpg`

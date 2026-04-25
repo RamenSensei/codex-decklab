@@ -17,11 +17,17 @@ import shutil
 import subprocess
 import sys
 from dataclasses import asdict, dataclass, field
+from io import BytesIO
 from pathlib import Path
 from typing import Any, Iterable
 
 SUPPORTED_DOCS = {".pdf", ".docx"}
 SUPPORTED_IMAGES = {".png", ".jpg", ".jpeg", ".webp"}
+VISUAL_PRESERVATION_NOTE = (
+    "Potential standalone chart/figure/table-image. Use this asset together "
+    "with its source context and preserve structure, values, labels, axes, "
+    "legend, proportions, and recognizable appearance as much as possible."
+)
 
 
 def is_metadata_sidecar(path: Path) -> bool:
@@ -70,6 +76,58 @@ def truncate(text: str, limit: int = 4000) -> str:
     return text[:limit].rstrip() + " ... [truncated]"
 
 
+def image_dimensions_from_blob(blob: bytes) -> tuple[int | None, int | None]:
+    try:
+        from PIL import Image
+
+        with Image.open(BytesIO(blob)) as im:
+            return im.size
+    except Exception:
+        return None, None
+
+
+def image_dimensions_from_path(path: Path) -> tuple[int | None, int | None]:
+    try:
+        from PIL import Image
+
+        with Image.open(path) as im:
+            return im.size
+    except Exception:
+        return None, None
+
+
+def is_probable_source_visual(width: int | None, height: int | None) -> bool:
+    if width is None or height is None:
+        return True
+    if min(width, height) < 120:
+        return False
+    if width * height < 60_000:
+        return False
+    aspect_ratio = width / height
+    return 0.25 <= aspect_ratio <= 6.0
+
+
+def source_visual_meta(
+    width: int | None,
+    height: int | None,
+    *,
+    context_ref: str,
+    source_kind: str,
+    force_candidate: bool = False,
+) -> dict[str, Any]:
+    candidate = force_candidate or is_probable_source_visual(width, height)
+    meta: dict[str, Any] = {
+        "width": width,
+        "height": height,
+        "context_ref": context_ref,
+        "source_kind": source_kind,
+        "source_visual_candidate": candidate,
+    }
+    if candidate:
+        meta["preservation_instruction"] = VISUAL_PRESERVATION_NOTE
+    return meta
+
+
 def extract_pdf(path: Path, out_dir: Path, render_pages: int = 12) -> SourceRecord:
     rec = SourceRecord(path=str(path), kind="pdf", sha256=sha256_file(path))
     try:
@@ -106,7 +164,20 @@ def extract_pdf(path: Path, out_dir: Path, render_pages: int = 12) -> SourceReco
                 pix = page.get_pixmap(dpi=160, annots=True)
                 render_path = page_render_dir / f"page_{page_no:03d}.png"
                 pix.save(render_path)
-                rec.items.append(ExtractedItem(type="page_render", page=page_no, image_path=str(render_path)))
+                rec.items.append(
+                    ExtractedItem(
+                        type="page_render",
+                        page=page_no,
+                        image_path=str(render_path),
+                        meta={
+                            "width": pix.width,
+                            "height": pix.height,
+                            "context_ref": f"{path.name} page {page_no}",
+                            "source_kind": "pdf_page_render",
+                            "source_visual_candidate": False,
+                        },
+                    )
+                )
 
             for img_i, img in enumerate(page.get_images(full=True), start=1):
                 xref = img[0]
@@ -117,13 +188,25 @@ def extract_pdf(path: Path, out_dir: Path, render_pages: int = 12) -> SourceReco
                     image = doc.extract_image(xref)
                     ext = image.get("ext", "png")
                     img_path = extracted_img_dir / f"page_{page_no:03d}_img_{img_i:02d}.{ext}"
-                    img_path.write_bytes(image["image"])
+                    image_blob = image["image"]
+                    img_path.write_bytes(image_blob)
+                    width = image.get("width")
+                    height = image.get("height")
+                    if not width or not height:
+                        width, height = image_dimensions_from_blob(image_blob)
+                    meta = source_visual_meta(
+                        width,
+                        height,
+                        context_ref=f"{path.name} page {page_no}",
+                        source_kind="pdf_embedded_image",
+                    )
+                    meta["ext"] = ext
                     rec.items.append(
                         ExtractedItem(
                             type="embedded_image",
                             page=page_no,
                             image_path=str(img_path),
-                            meta={"width": image.get("width"), "height": image.get("height"), "ext": ext},
+                            meta=meta,
                         )
                     )
                 except Exception as e:
@@ -177,7 +260,21 @@ def extract_pdf_with_poppler(path: Path, out_dir: Path, rec: SourceRecord, rende
             for i, rendered in enumerate(sorted(page_render_dir.glob("page-*.png")), start=1):
                 target = page_render_dir / f"page_{i:03d}.png"
                 rendered.replace(target)
-                rec.items.append(ExtractedItem(type="page_render", page=i, image_path=str(target)))
+                width, height = image_dimensions_from_path(target)
+                rec.items.append(
+                    ExtractedItem(
+                        type="page_render",
+                        page=i,
+                        image_path=str(target),
+                        meta={
+                            "width": width,
+                            "height": height,
+                            "context_ref": f"{path.name} page {i}",
+                            "source_kind": "pdf_page_render",
+                            "source_visual_candidate": False,
+                        },
+                    )
+                )
         except Exception as e:
             rec.warnings.append(f"pdftoppm fallback failed: {e}")
     elif render_pages > 0:
@@ -255,7 +352,15 @@ def extract_docx(path: Path, out_dir: Path) -> SourceRecord:
             ext = content_type.split("/")[-1].replace("jpeg", "jpg")
             img_path = extracted_img_dir / f"{rel_id}.{ext}"
             img_path.write_bytes(blob)
-            rec.items.append(ExtractedItem(type="embedded_image", image_path=str(img_path), meta={"content_type": content_type}))
+            width, height = image_dimensions_from_blob(blob)
+            meta = source_visual_meta(
+                width,
+                height,
+                context_ref=f"{path.name} embedded image relationship {rel_id}",
+                source_kind="docx_embedded_image",
+            )
+            meta["content_type"] = content_type
+            rec.items.append(ExtractedItem(type="embedded_image", image_path=str(img_path), meta=meta))
         except Exception as e:
             rec.warnings.append(f"Image relationship {rel_id} extraction failed: {e}")
 
@@ -263,12 +368,82 @@ def extract_docx(path: Path, out_dir: Path) -> SourceRecord:
 
 
 def image_record(path: Path) -> SourceRecord:
+    width, height = image_dimensions_from_path(path)
     return SourceRecord(
         path=str(path),
         kind="reference_image",
         sha256=sha256_file(path),
-        items=[ExtractedItem(type="reference_image", image_path=str(path), text=path.name)],
+        items=[
+            ExtractedItem(
+                type="reference_image",
+                image_path=str(path),
+                text=path.name,
+                meta=source_visual_meta(
+                    width,
+                    height,
+                    context_ref=path.name,
+                    source_kind="user_reference_image",
+                    force_candidate=True,
+                ),
+            )
+        ],
     )
+
+
+def fallback_context_ref(rec: SourceRecord, item: ExtractedItem) -> str:
+    source_name = Path(rec.path).name
+    if item.page:
+        return f"{source_name} page {item.page}"
+    if item.text:
+        return f"{source_name}: {item.text}"
+    return source_name
+
+
+def build_source_visual_refs(records: list[SourceRecord]) -> dict[str, Any]:
+    refs: list[dict[str, Any]] = []
+    for rec in records:
+        for item in rec.items:
+            if not item.image_path:
+                continue
+
+            meta = item.meta or {}
+            is_source_visual = bool(meta.get("source_visual_candidate"))
+            is_page_context = item.type == "page_render"
+            if not is_source_visual and not is_page_context:
+                continue
+
+            reference_role = "high_fidelity_source_visual" if is_source_visual else "page_context_image"
+            preservation_instruction = (
+                meta.get("preservation_instruction")
+                if is_source_visual
+                else "Use as page context when a chart or figure is not available as a separate extracted image."
+            )
+            refs.append(
+                {
+                    "id": f"visual_ref_{len(refs) + 1:03d}",
+                    "path": item.image_path,
+                    "source_path": rec.path,
+                    "source_kind": rec.kind,
+                    "item_type": item.type,
+                    "page": item.page,
+                    "context_ref": meta.get("context_ref") or fallback_context_ref(rec, item),
+                    "reference_role": reference_role,
+                    "attach_as_image_input": True,
+                    "input_fidelity": "high" if is_source_visual else "standard",
+                    "width": meta.get("width"),
+                    "height": meta.get("height"),
+                    "preservation_instruction": preservation_instruction,
+                }
+            )
+
+    return {
+        "description": (
+            "Image assets to consider as real reference image inputs for slide generation. "
+            "Attach high_fidelity_source_visual items to the image-generation call when a slide uses them; "
+            "do not rely on mentioning the file path in text only."
+        ),
+        "refs": refs,
+    }
 
 
 def write_outputs(records: list[SourceRecord], out_dir: Path) -> None:
@@ -281,10 +456,27 @@ def write_outputs(records: list[SourceRecord], out_dir: Path) -> None:
         for r in records
     ]
     (out_dir / "source_manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    source_visual_refs = build_source_visual_refs(records)
+    (out_dir / "source_visual_refs.json").write_text(
+        json.dumps(source_visual_refs, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
 
     lines: list[str] = []
     lines.append("# Source Summary\n")
     lines.append("This file is generated for Codex deck planning. Use it to synthesize a story, not as slide text.\n")
+    if source_visual_refs["refs"]:
+        high_fidelity_count = sum(
+            1 for ref in source_visual_refs["refs"] if ref["reference_role"] == "high_fidelity_source_visual"
+        )
+        page_context_count = sum(
+            1 for ref in source_visual_refs["refs"] if ref["reference_role"] == "page_context_image"
+        )
+        lines.append(
+            "\nSource visual references are listed in `build/source_visual_refs.json`. "
+            f"{high_fidelity_count} high-fidelity source visual candidate(s) and "
+            f"{page_context_count} page context image(s) are available for image-input attachment.\n"
+        )
     for r_i, rec in enumerate(records, start=1):
         lines.append(f"\n## {r_i}. {Path(rec.path).name}\n")
         lines.append(f"- kind: `{rec.kind}`\n")
@@ -310,6 +502,10 @@ def write_outputs(records: list[SourceRecord], out_dir: Path) -> None:
                     lines.append("| " + " | ".join(cell.replace("|", "/") for cell in row[:8]) + " |\n")
             if item.image_path:
                 lines.append(f"\nImage/reference path: `{item.image_path}`\n")
+                if item.meta.get("source_visual_candidate"):
+                    lines.append("High-fidelity source visual candidate: `yes`\n")
+                    lines.append(f"Context: `{item.meta.get('context_ref', fallback_context_ref(rec, item))}`\n")
+                    lines.append(f"Preservation instruction: {item.meta.get('preservation_instruction')}\n")
     (out_dir / "source_summary.md").write_text("".join(lines), encoding="utf-8")
 
 
@@ -317,7 +513,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Extract PDF/DOCX/image source files for image-PPT deck generation.")
     parser.add_argument("source_dir", type=Path, help="Folder containing source files")
     parser.add_argument("--out", type=Path, default=Path("build"), help="Output folder")
-    parser.add_argument("--render-pages", type=int, default=12, help="Max PDF pages to render as reference images per PDF")
+    parser.add_argument(
+        "--render-pages",
+        type=int,
+        default=12,
+        help="Max PDF pages to render as reference images per PDF",
+    )
     args = parser.parse_args()
 
     if not args.source_dir.exists():
@@ -343,6 +544,7 @@ def main() -> int:
     print(f"Extracted {len(records)} source files into {args.out}")
     print(f"- {args.out / 'source_summary.md'}")
     print(f"- {args.out / 'source_manifest.json'}")
+    print(f"- {args.out / 'source_visual_refs.json'}")
     return 0
 
 

@@ -16,6 +16,12 @@ Art direction: minimalist modern flat design, Apple keynote-like restraint, Bauh
 Typography feel: clean, international, highly legible, with confident scale contrast.
 Palette and mood: ...
 Style system for the entire deck: ...
+Reference images to attach, if applicable:
+- path: ...
+  purpose: high-fidelity source chart/figure reference
+  matching source context: ...
+  fidelity: high; preserve chart structure, data values, labels, axes, legend,
+  proportions, and recognizable appearance.
 Avoid: stock-business clichés, cheap template feel, clutter, gimmicky 3D, fake dashboards, random icons, awkward text blocks.
 Constraints: polished, tasteful, readable, presentation-ready.
 ```
@@ -24,6 +30,15 @@ Operational rule: the generated image is the final slide image. When the deck
 requires text-bearing slides, prompts must ask the image model to render the
 listed text directly. Do not prompt for a text-free background plate unless the
 user explicitly asks for that asset type.
+
+Source chart preservation rule: when the source contains an extracted
+standalone data chart, plot, table-image, or figure-like diagram, include the
+asset path and its matching page/section/caption context in the slide prompt,
+then attach that file as a real reference image input to `$imagegen`. Ask the
+image model to preserve the original structure, data values, labels, axis
+relationships, legend, proportions, and recognizable appearance as much as
+possible. Do not rely on a text-only local path, and do not ask the model to
+redraw the chart from memory.
 
 ## Research / academic
 

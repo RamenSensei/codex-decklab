@@ -13,6 +13,7 @@ FIXED_DIRS = [
     Path("build/prompts"),
     Path("build/page_renders"),
     Path("build/extracted_images"),
+    Path("build/extracted_images/source_visual_crops"),
     Path("output"),
     Path("output/images"),
 ]
@@ -25,7 +26,11 @@ def assert_relative(path: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Create fixed build/output folders for the image PPT workflow.")
-    parser.add_argument("--clean", action="store_true", help="Remove build/ and output/ before recreating fixed folders.")
+    parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Remove build/ and output/ before recreating fixed folders.",
+    )
     args = parser.parse_args()
 
     for path in FIXED_DIRS:

@@ -11,11 +11,18 @@ slides, temporary plates, alternate render passes, or local text overlays.
 
 - `build/source_manifest.json`: machine-readable extraction manifest.
 - `build/source_summary.md`: extraction summary for deck planning.
+- `build/source_visual_refs.json`: extracted chart, figure, table-image, page
+  context, and user reference images that can be attached as image inputs during
+  slide generation.
 - `build/presentation_brief.md`: inferred scenario, audience, tone, and density strategy.
 - `build/deck_plan.json`: complete deck plan.
 - `build/prompts/slide_XX.txt`: final prompt for each generated slide image.
 - `build/page_renders/`: source page previews from extraction only.
-- `build/extracted_images/`: embedded source images from extraction only.
+- `build/extracted_images/`: embedded source images and explicit source visual
+  crops from extraction only.
+- `build/extracted_images/source_visual_crops/`: cropped standalone charts or
+  figures from page renders when the source visual is not available as an
+  embedded image.
 
 ## Final outputs
 
